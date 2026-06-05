@@ -1,0 +1,19 @@
+{
+  "name": "dante-ide-landing",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Landing page for Dante — the founder's command deck (by Perea).",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7"
+  }
+}

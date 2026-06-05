@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dante — the founder's command deck</title>
+<meta name="description" content="A voice-first command deck for founders running fleets of agents. Stop managing agents. Start commanding a fleet." />
+<meta property="og:title" content="Dante — the founder's command deck" />
+<meta property="og:description" content="A voice-first command deck for founders running fleets of agents. Stop managing agents. Start commanding a fleet." />
+<meta property="og:type" content="website" />
+<meta name="theme-color" content="#07070b" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #07070b; --ink: #f3ede4; --ink2: #cbc6ba; --ink3: #8a8578; --ink4: #5a564c;
+    --hair2: rgba(255,255,255,.12); --mint: #7fdba4; --aqua: #8fd0e0;
+    --serif: 'Instrument Serif', serif; --sans: 'Hanken Grotesk', sans-serif; --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans);
+    -webkit-font-smoothing: antialiased; min-height: 100vh; overflow-x: hidden; }
+  ::selection { background: rgba(127,219,164,.25); }
+  a { text-decoration: none; color: inherit; }
+
+  .brand { position: fixed; top: 28px; left: 32px; z-index: 5; display: flex; align-items: center; gap: 9px; font-family: var(--serif); font-size: 21px; }
+  .brand .glyph { width: 24px; height: 24px; border-radius: 7px; background: radial-gradient(circle at 34% 30%, var(--aqua), #a99bf5 72%); display: grid; place-items: center; box-shadow: 0 0 16px -3px rgba(143,208,224,.7); }
+  .brand .glyph span { width: 6px; height: 6px; border-radius: 50%; background: #0a0a10; }
+
+  .stage { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 28px; overflow: hidden; }
+  #stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  /* film grain — soft-light noise drifting subtly for a cinematic, atmospheric canvas */
+  .grain { position: absolute; inset: -20px; z-index: 1; pointer-events: none; opacity: .05; mix-blend-mode: soft-light;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat; background-size: 180px 180px; animation: grain 6.5s steps(7) infinite; }
+  @keyframes grain { 0%{transform:translate(0,0)} 14%{transform:translate(-5px,4px)} 28%{transform:translate(4px,-5px)} 42%{transform:translate(-4px,-3px)} 57%{transform:translate(5px,3px)} 71%{transform:translate(-3px,5px)} 85%{transform:translate(3px,-4px)} 100%{transform:translate(0,0)} }
+  /* vignette: darken behind the text so it stays legible over the aurora */
+  .vignette { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(58% 52% at 50% 46%, rgba(7,7,11,.9) 0%, rgba(7,7,11,.66) 34%, rgba(7,7,11,.24) 62%, transparent 82%); }
+  .inner { position: relative; z-index: 2; max-width: 920px; }
+
+  h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(46px, 8vw, 104px); line-height: .98; letter-spacing: -.015em; margin: 0; color: var(--ink); }
+  h1 .dim { color: #b9b3a6; }
+  h1 .hl { font-style: italic; color: var(--mint); text-shadow: 0 0 38px rgba(127,219,164,.45); }
+  .sub { font-size: clamp(15px, 1.7vw, 20px); line-height: 1.55; color: var(--ink2); max-width: 30ch; margin: 30px auto 0; }
+
+  .cta { display: flex; gap: 14px; justify-content: center; margin-top: 40px; flex-wrap: wrap; }
+  .btn { font-family: var(--sans); font-size: 15px; font-weight: 600; border-radius: 11px; padding: 13px 24px; cursor: pointer; border: 1px solid transparent; transition: all .2s; display: inline-flex; align-items: center; gap: 9px; }
+  .btn-primary { background: var(--mint); color: #0a160e; }
+  .btn-primary:hover { box-shadow: 0 0 32px -6px rgba(127,219,164,.65); transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: var(--ink2); border: 1px solid var(--hair2); }
+  .btn-ghost:hover { border-color: var(--ink3); color: var(--ink); }
+
+  .stats { display: flex; gap: clamp(28px, 6vw, 72px); justify-content: center; margin-top: 64px; flex-wrap: wrap; }
+  .stat { display: flex; flex-direction: column; gap: 5px; }
+  .stat b { font-family: var(--serif); font-weight: 400; font-size: clamp(30px, 3.4vw, 42px); color: var(--ink); line-height: 1; }
+  .stat span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink4); }
+
+  .foot { position: fixed; bottom: 22px; left: 0; right: 0; text-align: center; z-index: 5; font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; color: var(--ink4); }
+
+  @media (max-width: 560px) {
+    .brand { top: 20px; left: 22px; }
+    .stats { gap: 30px; margin-top: 48px; }
+  }
+
+  /* cinematic intro film overlay — plays once, then fades to reveal the landing */
+  #film-overlay { position: fixed; inset: 0; z-index: 100; background: #050509; transition: opacity .2s linear; }
+  #film-overlay .film-skip { position: fixed; bottom: 26px; right: 30px; z-index: 110; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink3); background: rgba(14,14,20,.6); border: 1px solid var(--hair2); border-radius: 99px; padding: 8px 16px; cursor: pointer; backdrop-filter: blur(10px); transition: color .2s, border-color .2s; }
+  #film-overlay .film-skip:hover { color: var(--ink); border-color: var(--ink3); }
+  /* hide the Stage scrubber inside the overlay + make it edge-to-edge full screen */
+  #film-root, #film-root > div, #film-root > div > div:first-child { background: #050509 !important; }
+  #film-root > div > div:last-child { display: none !important; }
+  #film-root > div > div:first-child > div { box-shadow: none !important; }
+
+  /* request-access modal */
+  .modal-backdrop { position: fixed; inset: 0; z-index: 120; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(5,5,9,.66); backdrop-filter: blur(8px); animation: mfade .25s ease both; }
+  .modal-backdrop[hidden] { display: none; }
+  @keyframes mfade { from { opacity: 0 } to { opacity: 1 } }
+  .modal { position: relative; width: min(460px, 94vw); border-radius: 20px; padding: 30px; background: rgba(18,18,26,.88); border: 1px solid var(--hair2); box-shadow: 0 40px 100px -30px rgba(0,0,0,.85); animation: mrise .35s cubic-bezier(.2,.85,.25,1) both; }
+  @keyframes mrise { from { opacity:0; transform: translateY(16px) scale(.98) } to { opacity:1; transform:none } }
+  .modal-x { position: absolute; top: 16px; right: 16px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--hair2); background: transparent; color: var(--ink3); cursor: pointer; }
+  .modal-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; color: var(--mint); }
+  .modal-title { font-family: var(--serif); font-weight: 400; font-size: 30px; color: var(--ink); margin: 12px 0 0; line-height: 1.1; }
+  .modal-sub { font-size: 14px; line-height: 1.55; color: var(--ink2); margin: 10px 0 0; }
+  #access-form { display: flex; flex-direction: column; gap: 14px; margin-top: 22px; }
+  .fld { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+  .fld span { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); }
+  .fld input, .fld textarea { font-family: var(--sans); font-size: 14px; color: var(--ink); background: rgba(255,255,255,.03); border: 1px solid var(--hair2); border-radius: 10px; padding: 11px 13px; resize: none; }
+  .fld input::placeholder, .fld textarea::placeholder { color: var(--ink4); }
+  .fld input:focus, .fld textarea:focus { outline: none; border-color: var(--mint); }
+  .modal-submit { justify-content: center; margin-top: 4px; }
+  .modal-done { text-align: center; padding: 6px 0 2px; }
+  .modal-done .done-orb { width: 54px; height: 54px; border-radius: 999px; margin: 0 auto 14px; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, var(--mint), #34c0a0 75%); color: #0a160e; font-size: 24px; box-shadow: 0 0 36px -6px var(--mint); }
+  .modal-done .btn { margin: 18px auto 0; }
+</style>
+</head>
+<body>
+  <a class="brand" href="#"><span class="glyph"><span></span></span>Dante</a>
+
+  <main class="stage">
+    <canvas id="stars"></canvas>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+    <div class="inner">
+      <h1><span class="dim">Stop managing agents.</span><br />Start <span class="hl">commanding</span> a fleet.</h1>
+      <p class="sub">A voice-first command deck for founders running fleets of agents. Tell us what you're building — we'll get you a seat.</p>
+      <div class="cta">
+        <a href="#" class="btn btn-primary" onclick="openAccess(event)">Request access →</a>
+        <a href="#" class="btn btn-ghost" onclick="watchFilm(event)">Watch the film</a>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>100</b><span>agents in the fleet</span></div>
+        <div class="stat"><b>4</b><span>workspaces, one deck</span></div>
+        <div class="stat"><b>9</b><span>decisions need you · today</span></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="foot">Dante · by Perea</div>
+
+  <!-- request access modal -->
+  <div id="access-modal" class="modal-backdrop" hidden onclick="if(event.target===this)closeAccess()">
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="modal-x" onclick="closeAccess()" aria-label="Close">✕</button>
+      <div id="access-form-wrap">
+        <div class="modal-eyebrow">REQUEST ACCESS</div>
+        <h3 class="modal-title">Tell us what you’re building.</h3>
+        <p class="modal-sub">Dante is rolling out to a small group of founders running real fleets — we’ll get you a seat on the deck.</p>
+        <form id="access-form" onsubmit="return submitAccess(event)">
+          <label class="fld"><span>Email</span><input type="email" required placeholder="you@company.com" /></label>
+          <label class="fld"><span>What are you building?</span><textarea rows="3" placeholder="One line on your product and the fleet you’re running…"></textarea></label>
+          <button type="submit" class="btn btn-primary modal-submit">Request access →</button>
+        </form>
+      </div>
+      <div id="access-done" class="modal-done" hidden>
+        <div class="done-orb">✓</div>
+        <h3 class="modal-title">You’re on the list.</h3>
+        <p class="modal-sub">We’ll reach out from Perea soon. Welcome to the deck.</p>
+        <button class="btn btn-ghost" onclick="closeAccess()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- intro film overlay: plays once on load, then fades into the landing above -->
+  <div id="film-overlay">
+    <div id="film-root"></div>
+    <button class="film-skip" onclick="window.__danteSkip&&window.__danteSkip()">Skip intro →</button>
+  </div>
+
+  <script>
+    // cinematic atmospheric background — slow additive AURORA blooms + floating bokeh
+    // for depth, a refined glinting STARFIELD on top (no connecting lines), film grain
+    // via CSS, occasional shooting star. Decorative only; respects reduced-motion.
+    (function () {
+      const cv = document.getElementById('stars'); if (!cv) return;
+      const ctx = cv.getContext('2d');
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let w, h, dpr = Math.min(devicePixelRatio || 1, 2);
+      let aurora = [], bokeh = [], field = [], bright = [], shoot = null, nextShoot = 3.5;
+      let mx = 0, my = 0, tmx = 0, tmy = 0;
+
+      const COOL = '#cfe4f2', WARM = '#f2e4cf', CREAM = '#f6f1e7', AMBER = '#e0a458';
+      const AUR = ['#7fdba4', '#8fd0e0', '#6f8ff5', '#34c0a0'];   // mint · aqua · indigo · teal
+      function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; }
+
+      function build() {
+        w = innerWidth; h = innerHeight; cv.width = w * dpr; cv.height = h * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const D = Math.max(w, h);
+        // aurora blooms — large, soft, drifting + breathing, placed off-center
+        const spots = [
+          { x: 0.18, y: 0.22 }, { x: 0.84, y: 0.20 }, { x: 0.10, y: 0.82 }, { x: 0.90, y: 0.80 }, { x: 0.50, y: 0.04 },
+        ];
+        aurora = spots.map((s, i) => ({
+          ox: s.x * w, oy: s.y * h, r: D * (0.34 + Math.random() * 0.2),
+          tint: AUR[i % AUR.length], base: 0.08 + Math.random() * 0.06,
+          ax: 40 + Math.random() * 70, ay: 34 + Math.random() * 60,
+          sx: 0.04 + Math.random() * 0.05, sy: 0.05 + Math.random() * 0.05,
+          br: 0.07 + Math.random() * 0.05, ph: Math.random() * 6.28,
+        }));
+        // floating bokeh light orbs (soft, drifting up)
+        bokeh = Array.from({ length: 9 }, () => ({
+          x: Math.random() * w, y: Math.random() * h, r: 26 + Math.random() * 80,
+          tint: AUR[Math.floor(Math.random() * AUR.length)], a: 0.04 + Math.random() * 0.06,
+          vy: 5 + Math.random() * 10, sway: 10 + Math.random() * 26, sp: 0.15 + Math.random() * 0.25, ph: Math.random() * 6.28,
+        }));
+        // starfield — 3 depth layers, no lines
+        const count = Math.min(240, Math.round(w * h / 6500));
+        field = Array.from({ length: count }, () => {
+          const depth = Math.random(), tr = Math.random();
+          return { x: Math.random() * w, y: Math.random() * h, r: 0.3 + depth * 1.0,
+            base: 0.1 + depth * 0.5, ph: Math.random() * 6.28, sp: 0.4 + Math.random() * 1.2,
+            depth, dx: (Math.random() - 0.5), dy: (Math.random() - 0.5),
+            tint: tr > 0.86 ? COOL : tr > 0.74 ? WARM : CREAM };
+        });
+        // a scatter of bright glint stars (cross sparkle), avoiding the dead center
+        const n = Math.max(10, Math.round(w / 110));
+        bright = Array.from({ length: n }, () => {
+          let gx, gy, tries = 0;
+          do { gx = Math.random(); gy = Math.random(); tries++; }
+          while (tries < 8 && Math.hypot(gx - 0.5, gy - 0.46) < 0.24);
+          const needs = Math.random() < 0.12;
+          return { bx: gx * w, by: gy * h, x: 0, y: 0,
+            r: needs ? 2.2 : 1.2 + Math.random() * 1.4, base: 0.55 + Math.random() * 0.4,
+            ph: Math.random() * 6.28, sp: 0.5 + Math.random() * 0.8, depth: 0.6 + Math.random() * 0.4,
+            amp: 2 + Math.random() * 5, tint: needs ? AMBER : (Math.random() > 0.7 ? COOL : CREAM), needs };
+        });
+      }
+
+      addEventListener('pointermove', (e) => { tmx = (e.clientX / innerWidth - 0.5) * 2; tmy = (e.clientY / innerHeight - 0.5) * 2; });
+
+      function glint(x, y, r, a, tint) {
+        const gr = r * 6;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, gr);
+        g.addColorStop(0, hexA(tint, 0.5 * a)); g.addColorStop(1, hexA(tint, 0));
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, gr, 0, 6.28); ctx.fill();
+        const L = r * 9 * (0.6 + a * 0.6), th = Math.max(0.6, r * 0.3);
+        let lg = ctx.createLinearGradient(x - L, y, x + L, y);
+        lg.addColorStop(0, hexA(tint, 0)); lg.addColorStop(0.5, hexA(tint, a * 0.7)); lg.addColorStop(1, hexA(tint, 0));
+        ctx.fillStyle = lg; ctx.fillRect(x - L, y - th / 2, L * 2, th);
+        let vg = ctx.createLinearGradient(x, y - L, x, y + L);
+        vg.addColorStop(0, hexA(tint, 0)); vg.addColorStop(0.5, hexA(tint, a * 0.7)); vg.addColorStop(1, hexA(tint, 0));
+        ctx.fillStyle = vg; ctx.fillRect(x - th / 2, y - L, th, L * 2);
+        ctx.fillStyle = hexA(tint, Math.min(1, 0.7 + a * 0.3));
+        ctx.beginPath(); ctx.arc(x, y, r, 0, 6.28); ctx.fill();
+      }
+
+      let t0 = performance.now(), last = t0;
+      function loop(now) {
+        const t = (now - t0) / 1000, dt = Math.min(0.05, (now - last) / 1000); last = now;
+        mx += (tmx - mx) * 0.035; my += (tmy - my) * 0.035;
+        ctx.clearRect(0, 0, w, h);
+
+        // ── additive glow layer: aurora + bokeh ──
+        ctx.globalCompositeOperation = 'lighter';
+        aurora.forEach((b) => {
+          const cx = b.ox + (reduce ? 0 : Math.sin(t * b.sx + b.ph) * b.ax) + mx * 26;
+          const cy = b.oy + (reduce ? 0 : Math.cos(t * b.sy + b.ph) * b.ay) + my * 26;
+          const r = b.r * (reduce ? 1 : 1 + b.br * Math.sin(t * 0.18 + b.ph));
+          const al = b.base * (reduce ? 1 : 0.8 + 0.2 * Math.sin(t * 0.22 + b.ph));
+          const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+          g.addColorStop(0, hexA(b.tint, al)); g.addColorStop(0.5, hexA(b.tint, al * 0.35)); g.addColorStop(1, hexA(b.tint, 0));
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.28); ctx.fill();
+        });
+        bokeh.forEach((o) => {
+          if (!reduce) { o.y -= o.vy * dt; if (o.y < -o.r) { o.y = h + o.r; o.x = Math.random() * w; } }
+          const cx = o.x + (reduce ? 0 : Math.sin(t * o.sp + o.ph) * o.sway) + mx * 14;
+          const cy = o.y + my * 14;
+          const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, o.r);
+          g.addColorStop(0, hexA(o.tint, o.a)); g.addColorStop(1, hexA(o.tint, 0));
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, o.r, 0, 6.28); ctx.fill();
+        });
+        ctx.globalCompositeOperation = 'source-over';
+
+        // ── field stars ──
+        field.forEach((s) => {
+          const drift = reduce ? 0 : t * 1.2;
+          const px = s.x + s.dx * drift + mx * (4 + s.depth * 13);
+          const py = s.y + s.dy * drift + my * (4 + s.depth * 13);
+          const tw = reduce ? s.base : s.base * (0.4 + 0.6 * Math.sin(t * s.sp + s.ph));
+          ctx.fillStyle = hexA(s.tint, Math.max(0, tw));
+          ctx.beginPath(); ctx.arc(((px % w) + w) % w, ((py % h) + h) % h, s.r, 0, 6.28); ctx.fill();
+        });
+
+        // ── bright glint stars ──
+        bright.forEach((b) => {
+          b.x = b.bx + (reduce ? 0 : Math.cos(t * b.sp + b.ph) * b.amp) + mx * (9 + b.depth * 16);
+          b.y = b.by + (reduce ? 0 : Math.sin(t * b.sp * 0.9 + b.ph) * b.amp) + my * (9 + b.depth * 16);
+          const tw = reduce ? b.base : b.base * (0.5 + 0.5 * Math.sin(t * (b.needs ? 2.2 : b.sp) + b.ph));
+          const r = b.needs ? b.r * (1 + 0.22 * Math.sin(t * 3 + b.ph)) : b.r;
+          glint(b.x, b.y, r, Math.max(0.15, tw), b.tint);
+        });
+
+        // ── occasional shooting star ──
+        if (!reduce) {
+          nextShoot -= dt;
+          if (!shoot && nextShoot <= 0) {
+            const fromLeft = Math.random() > 0.5;
+            shoot = { x: fromLeft ? w * (0.05 + Math.random() * 0.3) : w * (0.65 + Math.random() * 0.3),
+              y: h * (0.04 + Math.random() * 0.22), vx: (fromLeft ? 1 : -1) * (380 + Math.random() * 240),
+              vy: 150 + Math.random() * 120, life: 0, max: 0.9 + Math.random() * 0.5 };
+            nextShoot = 7 + Math.random() * 9;
+          }
+          if (shoot) {
+            shoot.life += dt; const p = shoot.life / shoot.max;
+            shoot.x += shoot.vx * dt; shoot.y += shoot.vy * dt;
+            const a = Math.sin(Math.min(1, p) * Math.PI) * 0.9;
+            const tx = shoot.x - shoot.vx * 0.06, ty = shoot.y - shoot.vy * 0.06;
+            const lg = ctx.createLinearGradient(tx, ty, shoot.x, shoot.y);
+            lg.addColorStop(0, 'rgba(246,241,231,0)'); lg.addColorStop(1, hexA(CREAM, a));
+            ctx.strokeStyle = lg; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(shoot.x, shoot.y); ctx.stroke();
+            ctx.fillStyle = hexA(CREAM, a); ctx.beginPath(); ctx.arc(shoot.x, shoot.y, 1.6, 0, 6.28); ctx.fill();
+            if (p >= 1) shoot = null;
+          }
+        }
+
+        requestAnimationFrame(loop);
+      }
+      build(); addEventListener('resize', build); requestAnimationFrame(loop);
+    })();
+  </script>
+  <script>
+    window.DANTE_LANDING = true;
+    // skip / end handoff: fade the overlay out and disable it
+    window.__danteSkip = function () {
+      try { localStorage.setItem('danteFilm:t', '51.6'); } catch {}
+      var ov = document.getElementById('film-overlay');
+      if (ov) { ov.style.transition = 'opacity .8s ease'; ov.style.opacity = '0'; ov.style.pointerEvents = 'none'; setTimeout(function(){ ov.style.display = 'none'; }, 900); }
+    };
+    window.openAccess = function (e) { if (e) e.preventDefault(); document.getElementById('access-modal').hidden = false; };
+    window.closeAccess = function () { var m = document.getElementById('access-modal'); if (!m) return; m.hidden = true; var fw = document.getElementById('access-form-wrap'), dn = document.getElementById('access-done'), f = document.getElementById('access-form'); if (fw) fw.hidden = false; if (dn) dn.hidden = true; if (f) f.reset(); };
+    window.submitAccess = function (e) { e.preventDefault(); document.getElementById('access-form-wrap').hidden = true; document.getElementById('access-done').hidden = false; return false; };
+    window.watchFilm = function (e) { if (e) e.preventDefault(); try { localStorage.setItem('danteFilm:t', '0'); } catch {} location.reload(); };
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAccess(); });
+  </script>
+  <!-- precompiled film bundle (React + the three lib modules), replacing the preview's in-browser Babel -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
