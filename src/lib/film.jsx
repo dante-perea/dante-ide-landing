@@ -1,12 +1,44 @@
 /* film.jsx — Dante film: scene overlays composed over the continuous FilmCanvas.
    Letterbox + grain frame the picture; Sprites time the text beats, the voice orb,
-   the decision checkpoint, the modes/primitives montage, and the logo + CTA. */
+   the decision checkpoint, the modes/primitives montage, and the logo + CTA.
+
+   Orientation-aware: window.__DANTE_FILM (set by film_bg.jsx) tells us whether we're
+   on the wide 1920×1080 landscape/desktop stage or the tall 1080×1920 portrait stage.
+   The `P` layout below repositions every overlay for a vertical screen — text moves
+   into a column, the cards stack, and elements scale up so they stay legible once the
+   tall stage is cover-fit onto a phone. Landscape values are unchanged from the design. */
 const { useState, useEffect } = React;
 const FC = { ink: '#f6f1e7', ink2: '#cbc6ba', ink3: '#8a8578', ink4: '#5a564c',
   mint: '#7fdba4', aqua: '#8fd0e0', iris: '#a99bf5', amber: '#e0a458' };
 const SERIF = "'Instrument Serif', serif", SANS = "'Hanken Grotesk', sans-serif", MONO = "'JetBrains Mono', monospace";
 const { Sprite, useSprite, useTime, Easing, clamp } = window;
 const sm = (a, b, t) => { const x = clamp((t - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
+
+const FILM = window.__DANTE_FILM || { portrait: false, W: 1920, H: 1080 };
+const PORTRAIT = FILM.portrait === true;
+
+// per-orientation overlay layout (positions are in the virtual stage coordinate space)
+const P = PORTRAIT ? {
+  sc1: { y: 740, size: 56 },
+  sc2: { y: 220, size: 88, sub: 26 },
+  orbTop: 980, orbScale: 1.5,
+  sc3line: { y: 700, size: 38 },
+  sc4: { y: 560, size: 84 },
+  cardTop: 700, cardScale: 1.5,
+  sc5line: { y: 430, size: 60 },
+  sc6line: { y: 360, size: 60 }, chipsTop: 620, chipsScale: 1.4, chipsStack: true, chipW: 380,
+  logoScale: 1.32,
+} : {
+  sc1: { y: 760, size: 34 },
+  sc2: { y: 150, size: 66, sub: 15 },
+  orbTop: 446, orbScale: 1,
+  sc3line: { y: 250, size: 30 },
+  sc4: { y: 150, size: 58 },
+  cardTop: 372, cardScale: 1,
+  sc5line: { y: 210, size: 44 },
+  sc6line: { y: 210, size: 46 }, chipsTop: 392, chipsScale: 1, chipsStack: false, chipW: 320,
+  logoScale: 1,
+};
 
 /* ── cinematic letterbox bars (slide in, hold, slide out) ── */
 function Letterbox() {
@@ -30,7 +62,7 @@ function Grain() {
 }
 
 /* generic centered line that fades + drifts up, honoring its Sprite window */
-function Line({ children, y, size = 40, color = FC.ink, font = SERIF, weight = 400, ls = '-0.01em', sub, glow }) {
+function Line({ children, y, size = 40, color = FC.ink, font = SERIF, weight = 400, ls = '-0.01em', sub, subSize = 15, glow }) {
   const { localTime, duration } = useSprite();
   const fin = sm(0, 0.9, localTime), fout = 1 - sm(duration - 0.8, duration, localTime);
   const op = fin * fout;
@@ -40,7 +72,7 @@ function Line({ children, y, size = 40, color = FC.ink, font = SERIF, weight = 4
       textAlign: 'center', width: '90%', zIndex: 30, willChange: 'transform, opacity' }}>
       <div style={{ fontFamily: font, fontWeight: weight, fontSize: size, color, letterSpacing: ls, lineHeight: 1.08,
         textShadow: glow ? `0 0 44px ${glow}` : '0 2px 30px rgba(0,0,0,.6)' }}>{children}</div>
-      {sub && <div style={{ fontFamily: MONO, fontSize: 15, letterSpacing: '.16em', textTransform: 'uppercase', color: FC.ink3, marginTop: 16 }}>{sub}</div>}
+      {sub && <div style={{ fontFamily: MONO, fontSize: subSize, letterSpacing: '.16em', textTransform: 'uppercase', color: FC.ink3, marginTop: 16 }}>{sub}</div>}
     </div>
   );
 }
@@ -51,8 +83,8 @@ function Orb() {
   const inn = sm(0, 0.7, localTime), out = 1 - sm(duration - 0.7, duration, localTime);
   const op = inn * out, sc = 0.8 + 0.2 * Easing.easeOutBack(clamp(localTime / 0.7, 0, 1));
   return (
-    <div style={{ position: 'absolute', left: '50%', top: 446, transform: `translate(-50%,0) scale(${sc})`, opacity: op, zIndex: 30,
-      display: 'flex', alignItems: 'center', gap: 16, padding: '14px 26px 14px 16px', borderRadius: 999,
+    <div style={{ position: 'absolute', left: '50%', top: P.orbTop, transform: `translate(-50%,0) scale(${sc * P.orbScale})`, transformOrigin: 'center top', opacity: op, zIndex: 30,
+      display: 'flex', alignItems: 'center', gap: 16, padding: '14px 26px 14px 16px', borderRadius: 999, whiteSpace: 'nowrap',
       background: 'rgba(14,14,20,.7)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.14)', boxShadow: '0 20px 60px -16px rgba(0,0,0,.7)' }}>
       <span style={{ width: 46, height: 46, borderRadius: 999, background: `radial-gradient(circle at 35% 30%, ${FC.aqua}, ${FC.iris} 72%)`, boxShadow: `0 0 26px -2px ${FC.aqua}`, display: 'grid', placeItems: 'center' }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 3, height: 20 }}>
@@ -75,10 +107,9 @@ function DecisionCard() {
   const approve = sm(duration - 2.2, duration - 1.2, localTime); // mint flash near the end
   const op = rise * out;
   const ty = (1 - rise) * 60;
-  const accent = `rgb(${Math.round(127 + (224-127)*0)}, ...)`; // unused
   const tint = approve > 0.02 ? FC.mint : FC.amber;
   return (
-    <div style={{ position: 'absolute', left: '50%', top: 372, transform: `translate(-50%, ${ty}px)`, opacity: op, zIndex: 30, width: 520,
+    <div style={{ position: 'absolute', left: '50%', top: P.cardTop, transform: `translate(-50%, ${ty}px) scale(${P.cardScale})`, transformOrigin: 'center top', opacity: op, zIndex: 30, width: 520,
       borderRadius: 18, background: 'rgba(18,18,26,.82)', backdropFilter: 'blur(18px)',
       border: `1px solid ${approve > 0.3 ? FC.mint : 'rgba(255,255,255,.14)'}`,
       boxShadow: `0 40px 90px -30px rgba(0,0,0,.85), 0 0 ${40*approve}px -6px ${FC.mint}` }}>
@@ -108,11 +139,11 @@ function ModesChips() {
     { k: 'DISTRIBUTION', d: 'understand the market, reach it', c: FC.aqua, tabs: ['Feed','Outreach','Content'] },
   ];
   return (
-    <div style={{ position: 'absolute', left: '50%', top: 392, transform: 'translate(-50%,0)', zIndex: 30, display: 'flex', gap: 22 }}>
+    <div style={{ position: 'absolute', left: '50%', top: P.chipsTop, transform: `translate(-50%,0) scale(${P.chipsScale})`, transformOrigin: 'center top', zIndex: 30, display: 'flex', flexDirection: P.chipsStack ? 'column' : 'row', gap: 22 }}>
       {modes.map((m, i) => {
         const inn = sm(0.2 + i * 0.35, 1.0 + i * 0.35, localTime);
         return (
-          <div key={m.k} style={{ width: 320, opacity: inn, transform: `translateY(${(1-inn)*26}px)`,
+          <div key={m.k} style={{ width: P.chipW, opacity: inn, transform: `translateY(${(1-inn)*26}px)`,
             borderRadius: 16, border: `1px solid ${m.c}44`, background: 'rgba(16,16,22,.6)', backdropFilter: 'blur(12px)', padding: 22, textAlign: 'left',
             boxShadow: `0 30px 70px -34px rgba(0,0,0,.8), 0 0 50px -30px ${m.c}` }}>
             <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '.14em', color: m.c }}>{m.k}</div>
@@ -137,7 +168,7 @@ function Logo() {
   const cta = sm(2.6, 3.4, localTime);
   const LANDING = window.DANTE_LANDING === true;
   const out = LANDING ? 1 : (1 - sm(duration - 0.8, duration, localTime));
-  const grow = LANDING ? (1 + 0.05 * sm(1.4, duration, localTime)) : 1;   // expands gently into the landing
+  const grow = (LANDING ? (1 + 0.05 * sm(1.4, duration, localTime)) : 1) * P.logoScale;   // expands gently into the landing
   return (
     <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 30, opacity: out, transform: `scale(${grow})`, transformOrigin: 'center 44%' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, transform: `scale(${0.6 + 0.4 * glyph})`, opacity: glyph }}>
@@ -146,7 +177,7 @@ function Logo() {
         </span>
         <span style={{ fontFamily: SERIF, fontSize: 76, color: FC.ink, opacity: word, letterSpacing: '.01em' }}>Dante</span>
       </div>
-      <div style={{ fontFamily: MONO, fontSize: 14, letterSpacing: '.2em', textTransform: 'uppercase', color: FC.ink3, marginTop: 18, opacity: tag }}>by Perea · the founder’s command deck</div>
+      <div style={{ fontFamily: MONO, fontSize: 14, letterSpacing: '.2em', textTransform: 'uppercase', color: FC.ink3, marginTop: 18, opacity: tag, textAlign: 'center' }}>by Perea · the founder’s command deck</div>
       <div style={{ fontFamily: SERIF, fontSize: 38, color: FC.ink, marginTop: 40, opacity: head, textAlign: 'center', lineHeight: 1.12 }}>
         <span style={{ color: '#b9b3a6' }}>Stop managing agents.</span><br />Start <span style={{ fontStyle: 'italic', color: FC.mint, textShadow: `0 0 38px ${FC.mint}66` }}>commanding</span> a fleet.
       </div>
@@ -176,24 +207,24 @@ function Film() {
       <FadeController />
 
       {/* SC1 — cold open */}
-      <Sprite start={2.4} end={4.9}><Line y={760} size={34} font={SERIF} color={FC.ink2}>You started with one.</Line></Sprite>
+      <Sprite start={2.4} end={4.9}><Line y={P.sc1.y} size={P.sc1.size} font={SERIF} color={FC.ink2}>You started with one.</Line></Sprite>
 
       {/* SC2 — the overwhelm */}
-      <Sprite start={7.4} end={11.6}><Line y={150} size={66} color={FC.ink} sub="a hundred agents · a thousand decisions">Then there were a hundred.</Line></Sprite>
+      <Sprite start={7.4} end={11.6}><Line y={P.sc2.y} size={P.sc2.size} color={FC.ink} sub="a hundred agents · a thousand decisions" subSize={P.sc2.sub}>Then there were a hundred.</Line></Sprite>
 
       {/* SC3 — the turn (orb + voice) */}
       <Sprite start={13.0} end={18.6}><Orb /></Sprite>
-      <Sprite start={13.4} end={18.6}><Line y={250} size={30} font={MONO} color={FC.ink3} ls=".06em">the noise stills. the fleet finds order.</Line></Sprite>
+      <Sprite start={13.4} end={18.6}><Line y={P.sc3line.y} size={P.sc3line.size} font={MONO} color={FC.ink3} ls=".06em">the noise stills. the fleet finds order.</Line></Sprite>
 
       {/* SC4 — the fleet */}
-      <Sprite start={21.0} end={29.0}><Line y={150} size={58} color={FC.ink}>One deck. Every agent.</Line></Sprite>
+      <Sprite start={21.0} end={29.0}><Line y={P.sc4.y} size={P.sc4.size} color={FC.ink}>One deck. Every agent.</Line></Sprite>
 
       {/* SC5 — the decision */}
       <Sprite start={30.4} end={37.6}><DecisionCard /></Sprite>
-      <Sprite start={30.8} end={37.6}><Line y={210} size={44} color={FC.ink} glow="rgba(127,219,164,.25)">It surfaces only what needs you.</Line></Sprite>
+      <Sprite start={30.8} end={37.6}><Line y={P.sc5line.y} size={P.sc5line.size} color={FC.ink} glow="rgba(127,219,164,.25)">It surfaces only what needs you.</Line></Sprite>
 
       {/* SC6 — the deck */}
-      <Sprite start={38.8} end={44.6}><Line y={210} size={46} color={FC.ink}>Build the product. Take it to market.</Line></Sprite>
+      <Sprite start={38.8} end={44.6}><Line y={P.sc6line.y} size={P.sc6line.size} color={FC.ink}>Build the product. Take it to market.</Line></Sprite>
       <Sprite start={39.0} end={44.6}><ModesChips /></Sprite>
 
       {/* SC7 — logo + CTA */}
@@ -210,16 +241,13 @@ function Film() {
   const LANDING = window.DANTE_LANDING === true; // plays once, then hands off to the landing beneath
   const params = new URLSearchParams(location.search);
   const seekT = params.get('t');
-  if (EXPORT || LANDING) { try { localStorage.setItem('danteFilm:t', '0'); } catch {} }
+  const forceSeek = seekT !== null && params.has('pause');   // QA: deep-link/scrub a paused frame, even in landing mode
+  if ((EXPORT || LANDING) && !forceSeek) { try { localStorage.setItem('danteFilm:t', '0'); } catch {} }
   else if (seekT !== null) { try { localStorage.setItem('danteFilm:t', String(parseFloat(seekT))); } catch {} }
-  // Portrait / narrow viewports skip the 16:9 cinematic intro entirely — it can't fill
-  // those screens without cropping the wide hero text or shrinking to an illegible band.
-  // index.html hides the overlay and sets this flag; the responsive landing shows instead.
-  if (window.DANTE_SKIP_FILM === true) return;
-  const autoplay = EXPORT || LANDING ? true : !params.has('pause');
+  const autoplay = forceSeek ? false : (EXPORT || LANDING ? true : !params.has('pause'));
   const rootEl = document.getElementById('film-root') || document.getElementById('root');
   ReactDOM.createRoot(rootEl).render(
-    React.createElement(window.Stage, { width: 1920, height: 1080, duration: 54, background: '#050509', persistKey: 'danteFilm', autoplay, loop: !(EXPORT || LANDING), fit: LANDING ? 'cover' : 'contain' },
+    React.createElement(window.Stage, { width: FILM.W, height: FILM.H, duration: 54, background: '#050509', persistKey: 'danteFilm', autoplay, loop: !(EXPORT || LANDING), fit: LANDING ? 'cover' : 'contain' },
       React.createElement(Film))
   );
 })();

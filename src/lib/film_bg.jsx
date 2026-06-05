@@ -2,16 +2,44 @@
    ONE deep-space world with a moving camera, rendered as a pure function of the
    Stage playhead (so it scrubs perfectly). Choreographs: a lone star → a chaotic
    storm of a hundred → settling into a four-workspace constellation → camera push
-   to a decision → collapse into the logo. Exports <FilmCanvas/> to window. */
+   to a decision → collapse into the logo. Exports <FilmCanvas/> to window.
+
+   Orientation-aware: landscape / desktop use the original wide 1920×1080 stage; a
+   portrait phone gets a re-composed tall 1080×1920 stage — the four workspaces stack
+   into a narrower 2×2 and the camera moves are retuned — so the intro fills a vertical
+   screen instead of being cropped. The choreography (timings, narrative) is identical;
+   only the spatial layout differs. */
 (function () {
   const { useRef, useEffect } = React;
-  const W = 1920, H = 1080, CX = 960, CY = 540;
+
+  // ── orientation-aware layout ────────────────────────────────────────────────
+  const PORTRAIT = (window.DANTE_LANDING === true) && (window.innerWidth < window.innerHeight);
+  const LANDSCAPE_L = {
+    W: 1920, H: 1080, CX: 960, CY: 540,
+    clusters: [ {x:556,y:400}, {x:1364,y:400}, {x:556,y:700}, {x:1364,y:700} ],
+    zoomKeys: [0,2,6,11,30,33.5,38,44,47,50],
+    zoomVals: [2.3,2.2,1.45,1.0,1.0,1.5,1.55,1.16,1.06,1.0],
+    panFactor: 0.62, labelDy: 168, labelFont: "500 21px 'JetBrains Mono', monospace", labelLS: '5px',
+    auroraR: 560, bgR: 1300, vigInner: 200, vigOuter: 1180,
+  };
+  const PORTRAIT_L = {
+    W: 1080, H: 1920, CX: 540, CY: 960,
+    // tall, narrow 2×2 — the same four workspaces stacked for a vertical screen
+    clusters: [ {x:316,y:900}, {x:764,y:900}, {x:316,y:1320}, {x:764,y:1320} ],
+    zoomKeys: [0,2,6,11,30,33.5,38,44,47,50],
+    zoomVals: [2.45,2.35,1.55,1.04,1.04,1.42,1.46,1.16,1.07,1.04],
+    panFactor: 0.5, labelDy: 156, labelFont: "500 30px 'JetBrains Mono', monospace", labelLS: '5px',
+    auroraR: 440, bgR: 1500, vigInner: 260, vigOuter: 1380,
+  };
+  const L = PORTRAIT ? PORTRAIT_L : LANDSCAPE_L;
+  const { W, H, CX, CY } = L;
+  const CLUSTERS = L.clusters;
+  window.__DANTE_FILM = { portrait: PORTRAIT, W, H };   // film.jsx reads this for Stage dims + layout
 
   const CREAM = '#f6f1e7', COOL = '#cfe4f2', WARM = '#f2e4cf', AMBER = '#e0a458';
   const AUR = ['#7fdba4', '#8fd0e0', '#6f8ff5', '#34c0a0'];
   // every star gets a fixed VIVID color at birth — always bright, never recolored
   const STARCOLS = ['#fbf6ec', '#fdf9f0', '#d6e9f6', '#cfe2f5', '#f2dca6', '#bfe8cf', '#cdd6f7'];
-  const CLUSTERS = [ {x:556,y:400}, {x:1364,y:400}, {x:556,y:700}, {x:1364,y:700} ];
   const CLUSTER_NAMES = ['WEB APP', 'MOBILE', 'PAYMENTS', 'GROWTH'];
 
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -69,8 +97,8 @@
     const E = window.Easing;
     // pull back to reveal the fleet, then the decision: zoom toward the top-right
     // cluster while the checkpoint confirms; ease back and settle calm for the landing.
-    const Z = window.interpolate([0,2,6,11,30,33.5,38,44,47,50],[2.3,2.2,1.45,1.0,1.0,1.5,1.55,1.16,1.06,1.0], E.easeInOutCubic)(t);
-    const px = CX + (CLUSTERS[1].x - CX) * 0.62, py = CY + (CLUSTERS[1].y - CY) * 0.62;
+    const Z = window.interpolate(L.zoomKeys, L.zoomVals, E.easeInOutCubic)(t);
+    const px = CX + (CLUSTERS[1].x - CX) * L.panFactor, py = CY + (CLUSTERS[1].y - CY) * L.panFactor;
     let cx = window.interpolate([0,30,34,38,44],[CX,CX,px,px,CX], E.easeInOutCubic)(t);
     let cy = window.interpolate([0,30,34,38,44],[CY,CY,py,py,CY], E.easeInOutCubic)(t);
     const life = smooth(18,22,t) * (1 - smooth(37,40,t));
@@ -117,7 +145,7 @@
 
   function draw(ctx, t, world) {
     // base space gradient
-    const bg = ctx.createRadialGradient(CX, CY*0.7, 0, CX, CY, 1300);
+    const bg = ctx.createRadialGradient(CX, CY*0.7, 0, CX, CY, L.bgR);
     bg.addColorStop(0, '#0b0b14'); bg.addColorStop(0.5, '#08080e'); bg.addColorStop(1, '#050509');
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
 
@@ -131,7 +159,7 @@
       ctx.globalCompositeOperation = 'lighter';
       CLUSTERS.forEach((c, i) => {
         const tint = AUR[i % AUR.length];
-        const rr = 560 + Math.sin(t * 0.2 + i) * 40;
+        const rr = L.auroraR + Math.sin(t * 0.2 + i) * 40;
         const al = (0.07 + 0.03 * Math.sin(t * 0.25 + i)) * aur;
         const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, rr);
         g.addColorStop(0, hexA(tint, al)); g.addColorStop(0.5, hexA(tint, al * 0.4)); g.addColorStop(1, hexA(tint, 0));
@@ -156,13 +184,13 @@
       g.addColorStop(0, hexA(tint, 0.5 * a)); g.addColorStop(1, hexA(tint, 0));
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, gr, 0, 6.28); ctx.fill();
       if (spike) {
-        const L = r * 9 * (0.6 + a * 0.6), th = Math.max(0.5, r * 0.28);
-        let lg = ctx.createLinearGradient(x - L, y, x + L, y);
+        const Ls = r * 9 * (0.6 + a * 0.6), th = Math.max(0.5, r * 0.28);
+        let lg = ctx.createLinearGradient(x - Ls, y, x + Ls, y);
         lg.addColorStop(0, hexA(tint,0)); lg.addColorStop(0.5, hexA(tint, a*0.7)); lg.addColorStop(1, hexA(tint,0));
-        ctx.fillStyle = lg; ctx.fillRect(x - L, y - th/2, L*2, th);
-        let vg = ctx.createLinearGradient(x, y - L, x, y + L);
+        ctx.fillStyle = lg; ctx.fillRect(x - Ls, y - th/2, Ls*2, th);
+        let vg = ctx.createLinearGradient(x, y - Ls, x, y + Ls);
         vg.addColorStop(0, hexA(tint,0)); vg.addColorStop(0.5, hexA(tint, a*0.7)); vg.addColorStop(1, hexA(tint,0));
-        ctx.fillStyle = vg; ctx.fillRect(x - th/2, y - L, th, L*2);
+        ctx.fillStyle = vg; ctx.fillRect(x - th/2, y - Ls, th, Ls*2);
       }
       ctx.fillStyle = hexA(tint, Math.min(1, 0.7 + a * 0.3));
       ctx.beginPath(); ctx.arc(x, y, r, 0, 6.28); ctx.fill();
@@ -178,16 +206,16 @@
     const lbl = smooth(22.5, 24.5, t) * (1 - smooth(33, 35, t));
     if (lbl > 0.01) {
       ctx.textAlign = 'center';
-      ctx.font = "500 21px 'JetBrains Mono', monospace";
-      ctx.letterSpacing = '5px';
+      ctx.font = L.labelFont;
+      ctx.letterSpacing = L.labelLS;
       CLUSTERS.forEach((c, i) => {
-        const y = c.y + 168;
+        const y = c.y + L.labelDy;
         ctx.fillStyle = hexA('#ece7dc', lbl * 0.95);
         ctx.fillText(CLUSTER_NAMES[i], c.x + 2.5, y);            // +2.5 visually centers the tracked text
-        const uw = Math.min(150, CLUSTER_NAMES[i].length * 17 + 24);
+        const uw = Math.min(PORTRAIT ? 190 : 150, CLUSTER_NAMES[i].length * (PORTRAIT ? 21 : 17) + 24);
         const ug = ctx.createLinearGradient(c.x - uw / 2, 0, c.x + uw / 2, 0);
         ug.addColorStop(0, hexA(AUR[i], 0)); ug.addColorStop(0.5, hexA(AUR[i], lbl * 0.85)); ug.addColorStop(1, hexA(AUR[i], 0));
-        ctx.fillStyle = ug; ctx.fillRect(c.x - uw / 2, y + 12, uw, 1.5);
+        ctx.fillStyle = ug; ctx.fillRect(c.x - uw / 2, y + 14, uw, 1.5);
       });
       ctx.letterSpacing = '0px';
     }
@@ -195,7 +223,7 @@
 
     // ── vignette (screen space); deepens during the decision push ──
     const vig = 0.5 + 0.32 * smooth(30, 36, t) * (1 - smooth(43, 46, t));
-    const vg = ctx.createRadialGradient(CX, CY * 0.95, 200, CX, CY, 1180);
+    const vg = ctx.createRadialGradient(CX, CY * 0.95, L.vigInner, CX, CY, L.vigOuter);
     vg.addColorStop(0, 'rgba(5,5,9,0)'); vg.addColorStop(0.62, `rgba(5,5,9,${vig * 0.4})`); vg.addColorStop(1, `rgba(5,5,9,${vig})`);
     ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
   }
