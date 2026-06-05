@@ -27,8 +27,10 @@
     // tall, narrow 2×2 — the same four workspaces stacked for a vertical screen
     clusters: [ {x:316,y:900}, {x:764,y:900}, {x:316,y:1320}, {x:764,y:1320} ],
     zoomKeys: [0,2,6,11,30,33.5,38,44,47,50],
-    zoomVals: [2.45,2.35,1.55,1.04,1.04,1.42,1.46,1.16,1.07,1.04],
-    panFactor: 0.5, labelDy: 156, labelFont: "500 30px 'JetBrains Mono', monospace", labelLS: '5px',
+    // gentler decision push than landscape: on a narrow frame a big zoom+pan slices the
+    // left workspace labels off-edge, so we keep the fleet in-frame behind the card.
+    zoomVals: [2.45,2.35,1.55,1.04,1.04,1.16,1.18,1.10,1.06,1.04],
+    panFactor: 0.15, labelDy: 156, labelFont: "500 30px 'JetBrains Mono', monospace", labelLS: '5px',
     auroraR: 440, bgR: 1500, vigInner: 260, vigOuter: 1380,
   };
   const L = PORTRAIT ? PORTRAIT_L : LANDSCAPE_L;
