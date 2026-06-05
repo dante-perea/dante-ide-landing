@@ -212,6 +212,10 @@ function Film() {
   const seekT = params.get('t');
   if (EXPORT || LANDING) { try { localStorage.setItem('danteFilm:t', '0'); } catch {} }
   else if (seekT !== null) { try { localStorage.setItem('danteFilm:t', String(parseFloat(seekT))); } catch {} }
+  // Portrait / narrow viewports skip the 16:9 cinematic intro entirely — it can't fill
+  // those screens without cropping the wide hero text or shrinking to an illegible band.
+  // index.html hides the overlay and sets this flag; the responsive landing shows instead.
+  if (window.DANTE_SKIP_FILM === true) return;
   const autoplay = EXPORT || LANDING ? true : !params.has('pause');
   const rootEl = document.getElementById('film-root') || document.getElementById('root');
   ReactDOM.createRoot(rootEl).render(

@@ -87,6 +87,12 @@
     .modal .fld input, .modal .fld textarea { font-size: 16px; }
   }
 
+  /* ── portrait / narrow: the cinematic intro is skipped (see index.html script),
+     so its "Watch the film" CTA would just reload to the landing — hide it ── */
+  @media (max-aspect-ratio: 1/1) {
+    .cta .btn-ghost { display: none; }
+  }
+
   /* cinematic intro film overlay — plays once, then fades to reveal the landing */
   #film-overlay { position: fixed; inset: 0; z-index: 100; background: #050509; transition: opacity .2s linear; }
   #film-overlay .film-skip { position: fixed; bottom: 26px; right: 30px; z-index: 110; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
@@ -326,6 +332,17 @@
   </script>
   <script>
     window.DANTE_LANDING = true;
+    // Portrait / narrow viewports skip the 16:9 cinematic intro: it can't fill them
+    // without cropping the wide hero lines or shrinking to an unreadable band. We hide
+    // the overlay and flag the film not to mount, so the responsive landing shows
+    // immediately. The full intro still plays on landscape / desktop.
+    (function () {
+      if (window.matchMedia('(max-aspect-ratio: 1/1)').matches) {
+        window.DANTE_SKIP_FILM = true;
+        var ov = document.getElementById('film-overlay');
+        if (ov) ov.style.display = 'none';
+      }
+    })();
     // skip / end handoff: fade the overlay out and disable it
     window.__danteSkip = function () {
       try { localStorage.setItem('danteFilm:t', '51.6'); } catch {}
