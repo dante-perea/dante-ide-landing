@@ -5,3 +5,7 @@ dist
 *.local
 .env
 .env.*
+
+# capture/verify harness (local only)
+capture-mine.html
+verify/

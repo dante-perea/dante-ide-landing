@@ -9,6 +9,8 @@
 
   const CREAM = '#f6f1e7', COOL = '#cfe4f2', WARM = '#f2e4cf', AMBER = '#e0a458';
   const AUR = ['#7fdba4', '#8fd0e0', '#6f8ff5', '#34c0a0'];
+  // every star gets a fixed VIVID color at birth — always bright, never recolored
+  const STARCOLS = ['#fbf6ec', '#fdf9f0', '#d6e9f6', '#cfe2f5', '#f2dca6', '#bfe8cf', '#cdd6f7'];
   const CLUSTERS = [ {x:556,y:400}, {x:1364,y:400}, {x:556,y:700}, {x:1364,y:700} ];
   const CLUSTER_NAMES = ['WEB APP', 'MOBILE', 'PAYMENTS', 'GROWTH'];
 
@@ -43,21 +45,21 @@
         agents.push({
           idx, cluster: c, hero, needs,
           cx, cy,
-          chx: rng() * W, chy: rng() * H,               // chaos scatter
-          birth: hero ? 0.3 : 5.0 + rng() * 5.6,
+          chx: W*0.15 + rng() * W*0.70, chy: H*0.13 + rng() * H*0.74,   // scatter kept inside the visible frame (no edge pop-in)
+          birth: hero ? 0.3 : 4.2 + rng() * 5.2,
           r: hero ? 4.2 : (needs ? 2.4 : 0.9 + rng() * 1.7),
           ph: rng() * 6.28, sp: 0.5 + rng() * 1.0,
           driftPh: rng() * 6.28, driftAmp: 4 + rng() * 9,
-          alert: rng() < 0.7,                            // flips amber during the storm
-          tint: rng() > 0.74 ? COOL : (rng() > 0.5 ? WARM : CREAM),
+          alert: false,
+          tint: needs ? AMBER : STARCOLS[Math.floor(rng() * STARCOLS.length)],
           spike: hero || needs || rng() < 0.18,
         });
       }
     }
     // overwhelm motes — extra noise that floods in then clears
     const motes = Array.from({ length: 170 }, () => ({
-      x: rng() * W, y: rng() * H, r: 0.5 + rng() * 1.4, ph: rng() * 6.28, sp: 2 + rng() * 4,
-      birth: 5.5 + rng() * 4, tint: rng() < 0.5 ? AMBER : CREAM,
+      x: W*0.12 + rng() * W*0.76, y: H*0.1 + rng() * H*0.8, r: 0.5 + rng() * 1.4, ph: rng() * 6.28, sp: 2 + rng() * 4,
+      birth: 4.5 + rng() * 3.5, tint: rng() < 0.5 ? AMBER : CREAM,
     }));
     return { agents, motes };
   }
@@ -67,7 +69,7 @@
     const E = window.Easing;
     // pull back to reveal the fleet, then the decision: zoom toward the top-right
     // cluster while the checkpoint confirms; ease back and settle calm for the landing.
-    const Z = window.interpolate([0,5,12,17,30,33.5,38,44,47,50],[2.35,2.3,1.16,1.0,1.0,1.5,1.55,1.16,1.06,1.0], E.easeInOutCubic)(t);
+    const Z = window.interpolate([0,2,6,11,30,33.5,38,44,47,50],[2.3,2.2,1.45,1.0,1.0,1.5,1.55,1.16,1.06,1.0], E.easeInOutCubic)(t);
     const px = CX + (CLUSTERS[1].x - CX) * 0.62, py = CY + (CLUSTERS[1].y - CY) * 0.62;
     let cx = window.interpolate([0,30,34,38,44],[CX,CX,px,px,CX], E.easeInOutCubic)(t);
     let cy = window.interpolate([0,30,34,38,44],[CY,CY,py,py,CY], E.easeInOutCubic)(t);
@@ -78,7 +80,7 @@
   }
 
   function agentState(a, t) {
-    const settleE = eInOut(smooth(11, 16.5, t));   // fleet fully formed by ~16.5 so nothing pops in at 19–20
+    const settleE = eInOut(smooth(10.5, 16, t));   // camera is already at full view by ~11, so the fleet forms on-screen — no pop
     const collapseE = eIn(clamp01((t - 45.5) / 4));
     let bx, by;
     if (a.hero) {
@@ -105,12 +107,10 @@
     const flash = a.hero ? smooth(0.3,0.8,t) * (1 - smooth(0.8,2.4,t)) : born * (1 - smooth(a.birth+0.1, a.birth+0.9, t));
     const alpha = born * (1 - collapseE * 0.15);
 
-    // amber during the storm; only `needs` stay amber after settling
-    const stormAmber = a.alert ? (1 - settleE) : 0;
-    const amberMix = a.needs ? Math.max(0.85, stormAmber) : stormAmber;
-    const tint = amberMix > 0 ? mix(a.tint, AMBER, amberMix) : a.tint;
+    // color is constant + vivid from birth — no storm-amber takeover, no recolor at settle
+    const tint = a.tint;
 
-    const tw = 0.5 + 0.5 * Math.sin(t * (a.needs ? 2.2 : a.sp) + a.ph);
+    const tw = 0.72 + 0.28 * Math.sin(t * (a.needs ? 2.2 : a.sp) + a.ph);   // gentle twinkle that never goes dark
     const r = (a.hero ? lerp(4.2, 1.8, settleE) : a.r) * (a.needs ? (1 + 0.22 * Math.sin(t*3 + a.ph)) : 1);
     return { x: bx, y: by, alpha, tint, tw, r, flash, settleE };
   }
@@ -170,7 +170,7 @@
     world.agents.forEach((a) => {
       const s = agentState(a, t);
       if (s.alpha <= 0.01) return;
-      const aa = Math.max(0.18, s.tw) * s.alpha;
+      const aa = Math.max(0.5, s.tw) * s.alpha;   // bright floor — no dark/dead-looking stars
       drawStar(s.x, s.y, s.r + s.flash * 2.5, Math.min(1, aa + s.flash), s.tint, a.spike || s.flash > 0.1);
     });
 

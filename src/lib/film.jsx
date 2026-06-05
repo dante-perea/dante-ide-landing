@@ -164,6 +164,7 @@ function FadeController() {
     const ov = document.getElementById('film-overlay'); if (!ov) return;
     ov.style.opacity = String(1 - sm(50, 51.4, t));   // quick cross-fade so the landing emerges sooner
     ov.style.pointerEvents = t > 50 ? 'none' : 'auto';
+    if (t >= 51.4) ov.style.display = 'none';          // fully handed off → stop rendering the film beneath
   }, [t]);
   return null;
 }
