@@ -29,7 +29,7 @@
   .brand .glyph { width: 24px; height: 24px; border-radius: 7px; background: radial-gradient(circle at 34% 30%, var(--aqua), #a99bf5 72%); display: grid; place-items: center; box-shadow: 0 0 16px -3px rgba(143,208,224,.7); }
   .brand .glyph span { width: 6px; height: 6px; border-radius: 50%; background: #0a0a10; }
 
-  .stage { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 28px; overflow: hidden; }
+  .stage { position: relative; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 28px; overflow: hidden; }
   #stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
   /* film grain — soft-light noise drifting subtly for a cinematic, atmospheric canvas */
   .grain { position: absolute; inset: -20px; z-index: 1; pointer-events: none; opacity: .05; mix-blend-mode: soft-light;
@@ -60,9 +60,31 @@
 
   .foot { position: fixed; bottom: 22px; left: 0; right: 0; text-align: center; z-index: 5; font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; color: var(--ink4); }
 
+  /* ── responsive: phones (portrait) ── */
   @media (max-width: 560px) {
-    .brand { top: 20px; left: 22px; }
-    .stats { gap: 30px; margin-top: 48px; }
+    .brand { top: 20px; left: 22px; font-size: 19px; }
+    .stage { padding: 72px 22px 28px; }
+    .sub { margin-top: 22px; }
+    .cta { margin-top: 30px; }
+    .stats { gap: 24px 30px; margin-top: 40px; }
+    /* footer flows beneath the content instead of a fixed overlay that collides with the stats */
+    .foot { position: static; margin-top: 36px; padding-bottom: 18px; }
+  }
+
+  /* ── responsive: short / landscape viewports (e.g. phones turned sideways) ── */
+  @media (max-height: 600px) and (orientation: landscape) {
+    .stage { padding: 60px 28px 28px; }
+    h1 { font-size: clamp(32px, 5.4vw, 60px); }
+    .sub { margin-top: 16px; }
+    .cta { margin-top: 22px; }
+    .stats { margin-top: 26px; }
+    .foot { position: static; margin-top: 28px; padding-bottom: 16px; }
+  }
+
+  /* ── touch devices: ≥16px inputs so iOS Safari doesn't auto-zoom on focus
+     (scoped to .modal for specificity so it wins over the base .fld rule below) ── */
+  @media (max-width: 768px), (pointer: coarse) {
+    .modal .fld input, .modal .fld textarea { font-size: 16px; }
   }
 
   /* cinematic intro film overlay — plays once, then fades to reveal the landing */
