@@ -28,8 +28,11 @@ import {
 
 const KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 const SATELLITE_DOMAIN = import.meta.env.VITE_CLERK_SATELLITE_DOMAIN || 'dante.id'
-const PRIMARY_SIGN_IN_URL = import.meta.env.VITE_CLERK_PRIMARY_SIGN_IN_URL || 'https://perea.company/sign-in'
-const PRIMARY_SIGN_UP_URL = import.meta.env.VITE_CLERK_PRIMARY_SIGN_UP_URL || 'https://perea.company/sign-up'
+// Optional. If set, the satellite redirects sign-in/up to these PRIMARY URLs. If left
+// unset, Clerk falls back to the primary instance's hosted Account Portal (which always
+// exists), so sign-in works without guessing the primary's path.
+const PRIMARY_SIGN_IN_URL = import.meta.env.VITE_CLERK_PRIMARY_SIGN_IN_URL
+const PRIMARY_SIGN_UP_URL = import.meta.env.VITE_CLERK_PRIMARY_SIGN_UP_URL
 const AFTER_SIGN_IN_URL = import.meta.env.VITE_CLERK_AFTER_SIGN_IN_URL || '/'
 // Treat the deployed site as the satellite; on localhost behave as a normal app so the
 // dev server doesn't try to bounce across domains.
@@ -99,12 +102,14 @@ function MissingKey() {
 function Root() {
   if (!KEY) return <MissingKey />
   const satellite = IS_SATELLITE ? { isSatellite: true, domain: SATELLITE_DOMAIN } : {}
+  const urls = {}
+  if (PRIMARY_SIGN_IN_URL) urls.signInUrl = PRIMARY_SIGN_IN_URL
+  if (PRIMARY_SIGN_UP_URL) urls.signUpUrl = PRIMARY_SIGN_UP_URL
   return (
     <ClerkProvider
       publishableKey={KEY}
-      signInUrl={PRIMARY_SIGN_IN_URL}
-      signUpUrl={PRIMARY_SIGN_UP_URL}
       afterSignOutUrl="/"
+      {...urls}
       {...satellite}
     >
       <Gateway />
