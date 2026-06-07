@@ -15,6 +15,12 @@ import {
 } from './clerk-config'
 
 const signInUrl = CLERK_PRIMARY_SIGN_IN_URL || '/sign-in'
+const waitlistContextUrl =
+  import.meta.env.VITE_WAITLIST_CONTEXT_URL ||
+  'https://pxmqbsxwvylgfyqbxstl.supabase.co/rest/v1/dante_waitlist_context'
+const waitlistContextKey =
+  import.meta.env.VITE_WAITLIST_CONTEXT_KEY ||
+  'sb_publishable_R0LtXTXPCOcXZfcpBlUBRg_8jTLkkMs'
 
 function Mark() {
   return (
@@ -38,6 +44,15 @@ function MissingKey() {
   )
 }
 
+function WaitlistHeader() {
+  return (
+    <>
+      <Mark />
+      <div className="eyebrow">Dante early access</div>
+    </>
+  )
+}
+
 function errorMessage(error) {
   const apiError = error?.errors?.[0]
   if (apiError?.code === 'waitlist_not_accepting_entries') {
@@ -46,21 +61,52 @@ function errorMessage(error) {
   return apiError?.longMessage || apiError?.message || error?.message || 'Could not join the waitlist. Please try again.'
 }
 
+async function saveWaitlistContext({ emailAddress, building }) {
+  if (!waitlistContextUrl || !waitlistContextKey) return
+
+  const response = await fetch(waitlistContextUrl, {
+    method: 'POST',
+    headers: {
+      apikey: waitlistContextKey,
+      Authorization: `Bearer ${waitlistContextKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({
+      email: emailAddress,
+      building,
+      source: 'dante.id',
+      user_agent: navigator.userAgent.slice(0, 300),
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Waitlist context insert failed: ${response.status}`)
+  }
+}
+
 function WaitlistForm() {
   const clerk = useClerk()
   const [email, setEmail] = useState('')
+  const [building, setBuilding] = useState('')
   const [status, setStatus] = useState('idle')
   const [error, setError] = useState('')
 
   async function onSubmit(event) {
     event.preventDefault()
     const emailAddress = email.trim()
-    if (!emailAddress || status === 'submitting') return
+    const buildingContext = building.trim()
+    if (!emailAddress || !buildingContext || status === 'submitting') return
 
     setStatus('submitting')
     setError('')
     try {
       await clerk.joinWaitlist({ emailAddress })
+      try {
+        await saveWaitlistContext({ emailAddress, building: buildingContext })
+      } catch (contextError) {
+        console.warn(contextError)
+      }
       setStatus('joined')
     } catch (err) {
       setStatus('error')
@@ -81,8 +127,9 @@ function WaitlistForm() {
 
   return (
     <>
+      <WaitlistHeader />
       <h1 className="title">Join the waitlist</h1>
-      <p className="sub">Enter your email address and we will let you know when your spot is ready.</p>
+      <p className="sub">Tell us where to reach you and what you are building.</p>
       {error ? <div className="waitlist-error" role="alert">{error}</div> : null}
       <form className="waitlist-form" onSubmit={onSubmit}>
         <label className="waitlist-field">
@@ -94,6 +141,17 @@ function WaitlistForm() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="you@company.com"
+          />
+        </label>
+        <label className="waitlist-field">
+          <span>What are you building?</span>
+          <textarea
+            required
+            minLength={2}
+            maxLength={700}
+            value={building}
+            onChange={(event) => setBuilding(event.target.value)}
+            placeholder="A short note is enough."
           />
         </label>
         <button className="waitlist-submit" type="submit" disabled={status === 'submitting'}>
@@ -117,9 +175,8 @@ function WaitlistPage() {
       {...clerkProviderProps()}
     >
       <section className="card waitlist-card">
-        <Mark />
-        <div className="eyebrow">Dante early access</div>
         <ClerkLoading>
+          <WaitlistHeader />
           <div className="loading">CONNECTING…</div>
         </ClerkLoading>
         <ClerkLoaded>

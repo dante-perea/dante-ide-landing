@@ -29,7 +29,9 @@ files are precompiled by Vite (replacing the preview's in-browser Babel + React 
   tells the film to play once (no loop), skip the cinematic bars, and use cover-fit.
 - **Skip intro →** / **Watch the film** call `window.__danteSkip()` / `watchFilm()`.
 - **Request access** links to `/waitlist`, which renders a first-party Clerk-backed
-  waitlist form using `clerk.joinWaitlist()`. Entries live in Clerk Dashboard → Waitlist.
+  waitlist form using `clerk.joinWaitlist()`. Email entries live in Clerk Dashboard →
+  Waitlist. The extra "What are you building?" answer is stored separately in Supabase
+  `public.dante_waitlist_context` because Clerk waitlist entries only accept email.
   Direct sign-up stays disabled; approved users sign in through the Perea primary domain.
 
 ```
@@ -67,6 +69,9 @@ npm run preview  # serve the production build locally
 - **Copy & CTAs:** the landing markup near the bottom of `index.html`.
 - **Waitlist:** enable Waitlist mode in the active Clerk production instance, then manage
   pending users in Clerk Dashboard → Waitlist. The public entry point is `/waitlist`.
+- **Waitlist context:** extra answers are inserted into Supabase via the public REST API
+  using insert-only RLS. There is no public select/update/delete policy on
+  `public.dante_waitlist_context`.
 
 ---
 
