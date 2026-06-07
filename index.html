@@ -81,12 +81,6 @@
     .foot { position: static; margin-top: 28px; padding-bottom: 16px; }
   }
 
-  /* ── touch devices: ≥16px inputs so iOS Safari doesn't auto-zoom on focus
-     (scoped to .modal for specificity so it wins over the base .fld rule below) ── */
-  @media (max-width: 768px), (pointer: coarse) {
-    .modal .fld input, .modal .fld textarea { font-size: 16px; }
-  }
-
   /* cinematic intro film overlay — plays once, then fades to reveal the landing */
   #film-overlay { position: fixed; inset: 0; z-index: 100; background: #050509; transition: opacity .2s linear; }
   #film-overlay .film-skip { position: fixed; bottom: 26px; right: 30px; z-index: 110; font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
@@ -97,26 +91,6 @@
   #film-root > div > div:last-child { display: none !important; }
   #film-root > div > div:first-child > div { box-shadow: none !important; }
 
-  /* request-access modal */
-  .modal-backdrop { position: fixed; inset: 0; z-index: 120; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(5,5,9,.66); backdrop-filter: blur(8px); animation: mfade .25s ease both; }
-  .modal-backdrop[hidden] { display: none; }
-  @keyframes mfade { from { opacity: 0 } to { opacity: 1 } }
-  .modal { position: relative; width: min(460px, 94vw); border-radius: 20px; padding: 30px; background: rgba(18,18,26,.88); border: 1px solid var(--hair2); box-shadow: 0 40px 100px -30px rgba(0,0,0,.85); animation: mrise .35s cubic-bezier(.2,.85,.25,1) both; }
-  @keyframes mrise { from { opacity:0; transform: translateY(16px) scale(.98) } to { opacity:1; transform:none } }
-  .modal-x { position: absolute; top: 16px; right: 16px; width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--hair2); background: transparent; color: var(--ink3); cursor: pointer; }
-  .modal-eyebrow { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; color: var(--mint); }
-  .modal-title { font-family: var(--serif); font-weight: 400; font-size: 30px; color: var(--ink); margin: 12px 0 0; line-height: 1.1; }
-  .modal-sub { font-size: 14px; line-height: 1.55; color: var(--ink2); margin: 10px 0 0; }
-  #access-form { display: flex; flex-direction: column; gap: 14px; margin-top: 22px; }
-  .fld { display: flex; flex-direction: column; gap: 6px; text-align: left; }
-  .fld span { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); }
-  .fld input, .fld textarea { font-family: var(--sans); font-size: 14px; color: var(--ink); background: rgba(255,255,255,.03); border: 1px solid var(--hair2); border-radius: 10px; padding: 11px 13px; resize: none; }
-  .fld input::placeholder, .fld textarea::placeholder { color: var(--ink4); }
-  .fld input:focus, .fld textarea:focus { outline: none; border-color: var(--mint); }
-  .modal-submit { justify-content: center; margin-top: 4px; }
-  .modal-done { text-align: center; padding: 6px 0 2px; }
-  .modal-done .done-orb { width: 54px; height: 54px; border-radius: 999px; margin: 0 auto 14px; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, var(--mint), #34c0a0 75%); color: #0a160e; font-size: 24px; box-shadow: 0 0 36px -6px var(--mint); }
-  .modal-done .btn { margin: 18px auto 0; }
   .signin-link { position: fixed; top: 28px; right: 32px; z-index: 6; font-family: var(--mono); font-size: 12.5px; letter-spacing: .04em;
     color: var(--ink2); border: 1px solid var(--hair2); border-radius: 9px; padding: 8px 15px; background: rgba(255,255,255,.03);
     backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: color .2s ease, border-color .2s ease, background .2s ease; }
@@ -136,7 +110,7 @@
       <h1><span class="dim">Stop managing agents.</span><br />Start <span class="hl">commanding</span> a fleet.</h1>
       <p class="sub">A voice-first command deck for founders running fleets of agents. Tell us what you're building — we'll get you a seat.</p>
       <div class="cta">
-        <a href="#" class="btn btn-primary" onclick="openAccess(event)">Request access →</a>
+        <a href="/waitlist" class="btn btn-primary">Request access →</a>
         <a href="#" class="btn btn-ghost" onclick="watchFilm(event)">Watch the film</a>
       </div>
       <div class="stats">
@@ -148,29 +122,6 @@
   </main>
 
   <div class="foot">Dante · by Perea</div>
-
-  <!-- request access modal -->
-  <div id="access-modal" class="modal-backdrop" hidden onclick="if(event.target===this)closeAccess()">
-    <div class="modal" role="dialog" aria-modal="true">
-      <button class="modal-x" onclick="closeAccess()" aria-label="Close">✕</button>
-      <div id="access-form-wrap">
-        <div class="modal-eyebrow">REQUEST ACCESS</div>
-        <h3 class="modal-title">Tell us what you’re building.</h3>
-        <p class="modal-sub">Dante is rolling out to a small group of founders running real fleets — we’ll get you a seat on the deck.</p>
-        <form id="access-form" onsubmit="return submitAccess(event)">
-          <label class="fld"><span>Email</span><input type="email" required placeholder="you@company.com" /></label>
-          <label class="fld"><span>What are you building?</span><textarea rows="3" placeholder="One line on your product and the fleet you’re running…"></textarea></label>
-          <button type="submit" class="btn btn-primary modal-submit">Request access →</button>
-        </form>
-      </div>
-      <div id="access-done" class="modal-done" hidden>
-        <div class="done-orb">✓</div>
-        <h3 class="modal-title">You’re on the list.</h3>
-        <p class="modal-sub">We’ll reach out from Perea soon. Welcome to the deck.</p>
-        <button class="btn btn-ghost" onclick="closeAccess()">Close</button>
-      </div>
-    </div>
-  </div>
 
   <!-- intro film overlay: plays once on load, then fades into the landing above -->
   <div id="film-overlay">
@@ -338,11 +289,7 @@
       var ov = document.getElementById('film-overlay');
       if (ov) { ov.style.transition = 'opacity .8s ease'; ov.style.opacity = '0'; ov.style.pointerEvents = 'none'; setTimeout(function(){ ov.style.display = 'none'; }, 900); }
     };
-    window.openAccess = function (e) { if (e) e.preventDefault(); document.getElementById('access-modal').hidden = false; };
-    window.closeAccess = function () { var m = document.getElementById('access-modal'); if (!m) return; m.hidden = true; var fw = document.getElementById('access-form-wrap'), dn = document.getElementById('access-done'), f = document.getElementById('access-form'); if (fw) fw.hidden = false; if (dn) dn.hidden = true; if (f) f.reset(); };
-    window.submitAccess = function (e) { e.preventDefault(); document.getElementById('access-form-wrap').hidden = true; document.getElementById('access-done').hidden = false; return false; };
     window.watchFilm = function (e) { if (e) e.preventDefault(); try { localStorage.setItem('danteFilm:t', '0'); } catch {} location.reload(); };
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeAccess(); });
   </script>
   <!-- precompiled film bundle (React + the three lib modules), replacing the preview's in-browser Babel -->
   <script type="module" src="/src/main.js"></script>

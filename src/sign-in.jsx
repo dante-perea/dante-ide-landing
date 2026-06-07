@@ -1,10 +1,11 @@
 /* sign-in.jsx — dante.id sign-in gateway.
  *
  * dante.id is a Clerk SATELLITE of the perea.company production instance. Per Clerk's
- * multi-domain rules, the sign-in/sign-up FLOW must complete on the PRIMARY domain
+ * multi-domain rules, the sign-in FLOW must complete on the PRIMARY domain
  * (perea.company) — a satellite SPA cannot render <SignIn> itself; it redirects to the
  * primary and the user is synced back here afterward. So this page is a branded gateway:
  * one identity across Perea / Founders / Dante, with a styled hand-off to Perea.
+ * Sign-up is intentionally replaced by Clerk Waitlist mode.
  *
  * To make dante.id self-host the actual sign-in FORM instead, it must become its own
  * Clerk primary (not a satellite) — then this file can render <SignIn /> directly.
@@ -21,22 +22,16 @@ import {
   SignedIn,
   SignedOut,
   SignInButton,
-  SignUpButton,
   UserButton,
   useUser,
 } from '@clerk/clerk-react'
-
-const KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-const SATELLITE_DOMAIN = import.meta.env.VITE_CLERK_SATELLITE_DOMAIN || 'dante.id'
-// Optional. If set, the satellite redirects sign-in/up to these PRIMARY URLs. If left
-// unset, Clerk falls back to the primary instance's hosted Account Portal (which always
-// exists), so sign-in works without guessing the primary's path.
-const PRIMARY_SIGN_IN_URL = import.meta.env.VITE_CLERK_PRIMARY_SIGN_IN_URL
-const PRIMARY_SIGN_UP_URL = import.meta.env.VITE_CLERK_PRIMARY_SIGN_UP_URL
-const AFTER_SIGN_IN_URL = import.meta.env.VITE_CLERK_AFTER_SIGN_IN_URL || '/'
-// Treat the deployed site as the satellite; on localhost behave as a normal app so the
-// dev server doesn't try to bounce across domains.
-const IS_SATELLITE = import.meta.env.PROD
+import {
+  AFTER_SIGN_IN_URL,
+  CLERK_PRIMARY_SIGN_IN_URL,
+  CLERK_PUBLISHABLE_KEY,
+  CLERK_WAITLIST_URL,
+  clerkProviderProps,
+} from './clerk-config'
 
 function Mark() {
   return (
@@ -62,14 +57,12 @@ function Gateway() {
 
       <ClerkLoaded>
         <SignedOut>
-          <SignInButton mode="redirect" forceRedirectUrl={AFTER_SIGN_IN_URL} signUpForceRedirectUrl={AFTER_SIGN_IN_URL}>
+          <SignInButton mode="redirect" forceRedirectUrl={AFTER_SIGN_IN_URL}>
             <button className="btn btn-primary">Continue with Perea ID →</button>
           </SignInButton>
-          <SignUpButton mode="redirect" forceRedirectUrl={AFTER_SIGN_IN_URL} signInForceRedirectUrl={AFTER_SIGN_IN_URL}>
-            <button className="btn btn-ghost">Create an account</button>
-          </SignUpButton>
+          <a className="btn btn-ghost" href={CLERK_WAITLIST_URL}>Join waitlist</a>
           <p className="foot">
-            <span className="dot">●</span> You authenticate securely on Perea, then land back on dante.id.
+            <span className="dot">●</span> Approved founders authenticate securely on Perea, then land back on dante.id.
           </p>
         </SignedOut>
 
@@ -100,17 +93,16 @@ function MissingKey() {
 }
 
 function Root() {
-  if (!KEY) return <MissingKey />
-  const satellite = IS_SATELLITE ? { isSatellite: true, domain: SATELLITE_DOMAIN } : {}
+  if (!CLERK_PUBLISHABLE_KEY) return <MissingKey />
   const urls = {}
-  if (PRIMARY_SIGN_IN_URL) urls.signInUrl = PRIMARY_SIGN_IN_URL
-  if (PRIMARY_SIGN_UP_URL) urls.signUpUrl = PRIMARY_SIGN_UP_URL
+  if (CLERK_PRIMARY_SIGN_IN_URL) urls.signInUrl = CLERK_PRIMARY_SIGN_IN_URL
   return (
     <ClerkProvider
-      publishableKey={KEY}
+      publishableKey={CLERK_PUBLISHABLE_KEY}
       afterSignOutUrl="/"
+      waitlistUrl={CLERK_WAITLIST_URL}
       {...urls}
-      {...satellite}
+      {...clerkProviderProps()}
     >
       <Gateway />
     </ClerkProvider>
