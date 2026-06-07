@@ -120,7 +120,6 @@ function WaitlistForm() {
         <div className="done-orb">✓</div>
         <h1 className="title">You are on the list</h1>
         <p className="sub">We will email you when your Dante seat is ready.</p>
-        <a className="waitlist-secondary" href={signInUrl}>Already have access? Sign in</a>
       </div>
     )
   }
@@ -158,7 +157,6 @@ function WaitlistForm() {
           {status === 'submitting' ? 'Joining...' : 'Join the waitlist'}
         </button>
       </form>
-      <p className="waitlist-signin">Already have access? <a href={signInUrl}>Sign in</a></p>
     </>
   )
 }
