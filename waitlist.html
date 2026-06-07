@@ -60,10 +60,12 @@
   .waitlist-form { display: flex; flex-direction: column; gap: 18px; margin-top: 24px; }
   .waitlist-field { display: flex; flex-direction: column; gap: 9px; text-align: left; }
   .waitlist-field span { font-family: var(--mono); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink3); }
-  .waitlist-field input { width: 100%; min-height: 52px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 0 17px;
+  .waitlist-field input, .waitlist-field textarea { width: 100%; border: 1px solid rgba(255,255,255,.08); border-radius: 14px;
     color: var(--ink); background: rgba(255,255,255,.045); font: 500 16px/1 var(--sans); outline: none; transition: border-color .18s ease, background .18s ease, box-shadow .18s ease; }
-  .waitlist-field input::placeholder { color: var(--ink4); }
-  .waitlist-field input:focus { border-color: rgba(127,219,164,.72); background: rgba(255,255,255,.06); box-shadow: 0 0 0 4px rgba(127,219,164,.1); }
+  .waitlist-field input { min-height: 52px; padding: 0 17px; }
+  .waitlist-field textarea { min-height: 92px; padding: 16px 17px; resize: vertical; line-height: 1.35; }
+  .waitlist-field input::placeholder, .waitlist-field textarea::placeholder { color: var(--ink4); }
+  .waitlist-field input:focus, .waitlist-field textarea:focus { border-color: rgba(127,219,164,.72); background: rgba(255,255,255,.06); box-shadow: 0 0 0 4px rgba(127,219,164,.1); }
   .waitlist-submit { min-height: 54px; border: 0; border-radius: 14px; cursor: pointer; color: #07140d;
     background: linear-gradient(180deg, var(--mint), #4fc59a); box-shadow: 0 10px 30px -10px rgba(127,219,164,.6);
     font: 700 15px/1 var(--sans); transition: transform .12s ease, filter .2s ease, opacity .2s ease; }
