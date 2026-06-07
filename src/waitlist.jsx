@@ -1,14 +1,13 @@
 /* waitlist.jsx — real Clerk-backed request-access flow for dante.id. */
-import React from 'react'
+import React, { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
   ClerkLoaded,
   ClerkLoading,
   ClerkProvider,
-  Waitlist,
+  useClerk,
 } from '@clerk/clerk-react'
 import {
-  AFTER_SIGN_IN_URL,
   CLERK_PRIMARY_SIGN_IN_URL,
   CLERK_PUBLISHABLE_KEY,
   CLERK_WAITLIST_URL,
@@ -16,70 +15,6 @@ import {
 } from './clerk-config'
 
 const signInUrl = CLERK_PRIMARY_SIGN_IN_URL || '/sign-in'
-
-const waitlistAppearance = {
-  variables: {
-    colorPrimary: '#7fdba4',
-    colorBackground: 'rgba(18,18,26,.88)',
-    colorText: '#f3ede4',
-    colorTextSecondary: '#cbc6ba',
-    colorInputBackground: 'rgba(255,255,255,.04)',
-    colorInputText: '#f3ede4',
-    borderRadius: '14px',
-    fontFamily: 'Hanken Grotesk, sans-serif',
-  },
-  elements: {
-    rootBox: {
-      width: '100%',
-    },
-    cardBox: {
-      width: '100%',
-      boxShadow: 'none',
-    },
-    card: {
-      width: '100%',
-      background: 'transparent',
-      boxShadow: 'none',
-      border: '0',
-      padding: '0',
-    },
-    headerTitle: {
-      fontFamily: 'Instrument Serif, serif',
-      fontSize: '34px',
-      fontWeight: '400',
-      color: '#f3ede4',
-    },
-    headerSubtitle: {
-      color: '#cbc6ba',
-      fontSize: '14.5px',
-      lineHeight: '1.55',
-    },
-    formFieldLabel: {
-      color: '#8a8578',
-      fontFamily: 'JetBrains Mono, monospace',
-      fontSize: '10px',
-      letterSpacing: '.1em',
-      textTransform: 'uppercase',
-    },
-    formFieldInput: {
-      color: '#f3ede4',
-      borderColor: 'rgba(255,255,255,.12)',
-    },
-    formButtonPrimary: {
-      color: '#07140d',
-      background: 'linear-gradient(180deg, #7fdba4, #4fc59a)',
-      boxShadow: '0 10px 30px -10px rgba(127,219,164,.6)',
-      fontFamily: 'Hanken Grotesk, sans-serif',
-      fontWeight: '650',
-    },
-    footerActionText: {
-      color: '#8a8578',
-    },
-    footerActionLink: {
-      color: '#7fdba4',
-    },
-  },
-}
 
 function Mark() {
   return (
@@ -103,6 +38,73 @@ function MissingKey() {
   )
 }
 
+function errorMessage(error) {
+  const apiError = error?.errors?.[0]
+  if (apiError?.code === 'waitlist_not_accepting_entries') {
+    return 'The Clerk waitlist for this instance is not accepting entries yet. Enable waitlist mode in Clerk Dashboard, then try again.'
+  }
+  return apiError?.longMessage || apiError?.message || error?.message || 'Could not join the waitlist. Please try again.'
+}
+
+function WaitlistForm() {
+  const clerk = useClerk()
+  const [email, setEmail] = useState('')
+  const [status, setStatus] = useState('idle')
+  const [error, setError] = useState('')
+
+  async function onSubmit(event) {
+    event.preventDefault()
+    const emailAddress = email.trim()
+    if (!emailAddress || status === 'submitting') return
+
+    setStatus('submitting')
+    setError('')
+    try {
+      await clerk.joinWaitlist({ emailAddress })
+      setStatus('joined')
+    } catch (err) {
+      setStatus('error')
+      setError(errorMessage(err))
+    }
+  }
+
+  if (status === 'joined') {
+    return (
+      <div className="waitlist-done" role="status">
+        <div className="done-orb">✓</div>
+        <h1 className="title">You are on the list</h1>
+        <p className="sub">We will email you when your Dante seat is ready.</p>
+        <a className="waitlist-secondary" href={signInUrl}>Already have access? Sign in</a>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <h1 className="title">Join the waitlist</h1>
+      <p className="sub">Enter your email address and we will let you know when your spot is ready.</p>
+      {error ? <div className="waitlist-error" role="alert">{error}</div> : null}
+      <form className="waitlist-form" onSubmit={onSubmit}>
+        <label className="waitlist-field">
+          <span>Email address</span>
+          <input
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@company.com"
+          />
+        </label>
+        <button className="waitlist-submit" type="submit" disabled={status === 'submitting'}>
+          {status === 'submitting' ? 'Joining...' : 'Join the waitlist'}
+        </button>
+      </form>
+      <p className="waitlist-signin">Already have access? <a href={signInUrl}>Sign in</a></p>
+    </>
+  )
+}
+
 function WaitlistPage() {
   if (!CLERK_PUBLISHABLE_KEY) return <MissingKey />
 
@@ -121,11 +123,7 @@ function WaitlistPage() {
           <div className="loading">CONNECTING…</div>
         </ClerkLoading>
         <ClerkLoaded>
-          <Waitlist
-            afterJoinWaitlistUrl={AFTER_SIGN_IN_URL}
-            signInUrl={signInUrl}
-            appearance={waitlistAppearance}
-          />
+          <WaitlistForm />
         </ClerkLoaded>
       </section>
     </ClerkProvider>
