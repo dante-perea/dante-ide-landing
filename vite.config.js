@@ -15,11 +15,12 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      // Multi-page build: the cinematic landing (index.html) and the Clerk sign-in page
-      // (sign-in.html) are independent entry HTML files — index.html stays untouched.
+      // Multi-page build: the cinematic landing, Clerk sign-in gateway, and Clerk
+      // waitlist page are independent entry HTML files.
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         'sign-in': fileURLToPath(new URL('./sign-in.html', import.meta.url)),
+        waitlist: fileURLToPath(new URL('./waitlist.html', import.meta.url)),
       },
     },
   },

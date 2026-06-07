@@ -28,20 +28,25 @@ files are precompiled by Vite (replacing the preview's in-browser Babel + React 
   ramps `#film-overlay` opacity 1→0, revealing the landing. `window.DANTE_LANDING = true`
   tells the film to play once (no loop), skip the cinematic bars, and use cover-fit.
 - **Skip intro →** / **Watch the film** call `window.__danteSkip()` / `watchFilm()`.
-- **Request access** opens a glass modal (`#access-modal`). It currently flips to a local
-  success state — wire `submitAccess()` in `index.html` to your real endpoint
-  (waitlist / CRM / Calendly).
+- **Request access** links to `/waitlist`, which renders Clerk's `<Waitlist />`
+  component. Entries live in Clerk Dashboard → Waitlist. Direct sign-up stays disabled;
+  approved users sign in through the Perea primary domain.
 
 ```
 dante-ide-landing/
-├─ index.html          ← markup, styles, starfield canvas, modal, film-overlay wiring
+├─ index.html          ← markup, styles, starfield canvas, film-overlay wiring
+├─ waitlist.html       ← Clerk waitlist page
+├─ sign-in.html        ← Clerk sign-in gateway for approved users
 ├─ src/
 │  ├─ main.js          ← entry: exposes React on window, loads the lib in dependency order
+│  ├─ waitlist.jsx     ← renders Clerk's <Waitlist />
+│  ├─ sign-in.jsx      ← approved-user sign-in handoff
+│  ├─ clerk-config.js  ← shared Clerk satellite / URL config
 │  └─ lib/
 │     ├─ animations.jsx ← timeline engine (Stage / Sprite / easing), fit="cover" mode
 │     ├─ film_bg.jsx    ← continuous starfield / aurora / camera engine (pure fn of t)
 │     └─ film.jsx       ← the film: scene overlays + 54s timeline + landing handoff
-└─ vite.config.js      ← classic JSX transform so the lib's global-React contract holds
+└─ vite.config.js      ← classic JSX transform + multipage build inputs
 ```
 
 ## Develop
@@ -60,6 +65,8 @@ npm run preview  # serve the production build locally
 - **Camera moves:** `camera(t)` in `src/lib/film_bg.jsx`.
 - **Star count / clusters / names:** top of `src/lib/film_bg.jsx`.
 - **Copy & CTAs:** the landing markup near the bottom of `index.html`.
+- **Waitlist:** enable Waitlist mode in Clerk Dashboard → Waitlist, then manage pending
+  users there. The public entry point is `/waitlist`.
 
 ---
 
